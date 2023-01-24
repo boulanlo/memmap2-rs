@@ -140,6 +140,8 @@ pub struct MmapOptions {
     len: Option<usize>,
     stack: bool,
     populate: bool,
+    validate: bool,
+    additional_flags: libc::c_int,
 }
 
 impl MmapOptions {
@@ -307,6 +309,23 @@ impl MmapOptions {
         self
     }
 
+    /// Add a flag to be passed to the inner `mmap()` syscall.
+    ///
+    /// This is particularly useful to pass specific flags that otherwise don't change the API, i.e.
+    /// `MAP_SYNC`.
+    #[cfg(unix)]
+    pub fn with_flag(&mut self, flag: libc::c_int) -> &mut Self {
+        self.additional_flags |= flag;
+        self
+    }
+
+    /// Changes the `MAP_SHARED` flag to `MAP_SHARED_VALIDATE`.
+    #[cfg(unix)]
+    pub fn validate(&mut self) -> &mut Self {
+        self.validate = true;
+        self
+    }
+
     /// Creates a read-only memory map backed by a file.
     ///
     /// # Errors
@@ -338,8 +357,15 @@ impl MmapOptions {
     pub unsafe fn map<T: MmapAsRawDesc>(&self, file: T) -> Result<Mmap> {
         let desc = file.as_raw_desc();
 
-        MmapInner::map(self.get_len(&file)?, desc.0, self.offset, self.populate)
-            .map(|inner| Mmap { inner })
+        MmapInner::map(
+            self.get_len(&file)?,
+            desc.0,
+            self.offset,
+            self.populate,
+            self.validate,
+            self.additional_flags,
+        )
+        .map(|inner| Mmap { inner })
     }
 
     /// Creates a readable and executable memory map backed by a file.
@@ -351,8 +377,15 @@ impl MmapOptions {
     pub unsafe fn map_exec<T: MmapAsRawDesc>(&self, file: T) -> Result<Mmap> {
         let desc = file.as_raw_desc();
 
-        MmapInner::map_exec(self.get_len(&file)?, desc.0, self.offset, self.populate)
-            .map(|inner| Mmap { inner })
+        MmapInner::map_exec(
+            self.get_len(&file)?,
+            desc.0,
+            self.offset,
+            self.populate,
+            self.validate,
+            self.additional_flags,
+        )
+        .map(|inner| Mmap { inner })
     }
 
     /// Creates a writeable memory map backed by a file.
@@ -391,8 +424,15 @@ impl MmapOptions {
     pub unsafe fn map_mut<T: MmapAsRawDesc>(&self, file: T) -> Result<MmapMut> {
         let desc = file.as_raw_desc();
 
-        MmapInner::map_mut(self.get_len(&file)?, desc.0, self.offset, self.populate)
-            .map(|inner| MmapMut { inner })
+        MmapInner::map_mut(
+            self.get_len(&file)?,
+            desc.0,
+            self.offset,
+            self.populate,
+            self.validate,
+            self.additional_flags,
+        )
+        .map(|inner| MmapMut { inner })
     }
 
     /// Creates a copy-on-write memory map backed by a file.
@@ -422,8 +462,14 @@ impl MmapOptions {
     pub unsafe fn map_copy<T: MmapAsRawDesc>(&self, file: T) -> Result<MmapMut> {
         let desc = file.as_raw_desc();
 
-        MmapInner::map_copy(self.get_len(&file)?, desc.0, self.offset, self.populate)
-            .map(|inner| MmapMut { inner })
+        MmapInner::map_copy(
+            self.get_len(&file)?,
+            desc.0,
+            self.offset,
+            self.populate,
+            self.additional_flags,
+        )
+        .map(|inner| MmapMut { inner })
     }
 
     /// Creates a copy-on-write read-only memory map backed by a file.
@@ -457,8 +503,14 @@ impl MmapOptions {
     pub unsafe fn map_copy_read_only<T: MmapAsRawDesc>(&self, file: T) -> Result<Mmap> {
         let desc = file.as_raw_desc();
 
-        MmapInner::map_copy_read_only(self.get_len(&file)?, desc.0, self.offset, self.populate)
-            .map(|inner| Mmap { inner })
+        MmapInner::map_copy_read_only(
+            self.get_len(&file)?,
+            desc.0,
+            self.offset,
+            self.populate,
+            self.additional_flags,
+        )
+        .map(|inner| Mmap { inner })
     }
 
     /// Creates an anonymous memory map.
@@ -482,7 +534,7 @@ impl MmapOptions {
             ));
         }
 
-        MmapInner::map_anon(len, self.stack).map(|inner| MmapMut { inner })
+        MmapInner::map_anon(len, self.stack, self.additional_flags).map(|inner| MmapMut { inner })
     }
 
     /// Creates a raw memory map.
@@ -494,8 +546,15 @@ impl MmapOptions {
     pub fn map_raw<T: MmapAsRawDesc>(&self, file: T) -> Result<MmapRaw> {
         let desc = file.as_raw_desc();
 
-        MmapInner::map_mut(self.get_len(&file)?, desc.0, self.offset, self.populate)
-            .map(|inner| MmapRaw { inner })
+        MmapInner::map_mut(
+            self.get_len(&file)?,
+            desc.0,
+            self.offset,
+            self.populate,
+            self.validate,
+            self.additional_flags,
+        )
+        .map(|inner| MmapRaw { inner })
     }
 }
 

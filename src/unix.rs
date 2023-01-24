@@ -101,45 +101,87 @@ impl MmapInner {
         }
     }
 
-    pub fn map(len: usize, file: RawFd, offset: u64, populate: bool) -> io::Result<MmapInner> {
+    pub fn map(
+        len: usize,
+        file: RawFd,
+        offset: u64,
+        populate: bool,
+        validate: bool,
+        additional_flags: libc::c_int,
+    ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
+        let shared = if validate {
+            libc::MAP_SHARED_VALIDATE
+        } else {
+            libc::MAP_SHARED
+        };
         MmapInner::new(
             len,
             libc::PROT_READ,
-            libc::MAP_SHARED | populate,
+            shared | populate | additional_flags,
             file,
             offset,
         )
     }
 
-    pub fn map_exec(len: usize, file: RawFd, offset: u64, populate: bool) -> io::Result<MmapInner> {
+    pub fn map_exec(
+        len: usize,
+        file: RawFd,
+        offset: u64,
+        populate: bool,
+        validate: bool,
+        additional_flags: libc::c_int,
+    ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
+        let shared = if validate {
+            libc::MAP_SHARED_VALIDATE
+        } else {
+            libc::MAP_SHARED
+        };
         MmapInner::new(
             len,
             libc::PROT_READ | libc::PROT_EXEC,
-            libc::MAP_SHARED | populate,
+            shared | populate | additional_flags,
             file,
             offset,
         )
     }
 
-    pub fn map_mut(len: usize, file: RawFd, offset: u64, populate: bool) -> io::Result<MmapInner> {
+    pub fn map_mut(
+        len: usize,
+        file: RawFd,
+        offset: u64,
+        populate: bool,
+        validate: bool,
+        additional_flags: libc::c_int,
+    ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
+        let shared = if validate {
+            libc::MAP_SHARED_VALIDATE
+        } else {
+            libc::MAP_SHARED
+        };
         MmapInner::new(
             len,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_SHARED | populate,
+            shared | populate | additional_flags,
             file,
             offset,
         )
     }
 
-    pub fn map_copy(len: usize, file: RawFd, offset: u64, populate: bool) -> io::Result<MmapInner> {
+    pub fn map_copy(
+        len: usize,
+        file: RawFd,
+        offset: u64,
+        populate: bool,
+        additional_flags: libc::c_int,
+    ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
         MmapInner::new(
             len,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | populate,
+            libc::MAP_PRIVATE | populate | additional_flags,
             file,
             offset,
         )
@@ -150,24 +192,29 @@ impl MmapInner {
         file: RawFd,
         offset: u64,
         populate: bool,
+        additional_flags: libc::c_int,
     ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
         MmapInner::new(
             len,
             libc::PROT_READ,
-            libc::MAP_PRIVATE | populate,
+            libc::MAP_PRIVATE | populate | additional_flags,
             file,
             offset,
         )
     }
 
     /// Open an anonymous memory map.
-    pub fn map_anon(len: usize, stack: bool) -> io::Result<MmapInner> {
+    pub fn map_anon(
+        len: usize,
+        stack: bool,
+        additional_flags: libc::c_int,
+    ) -> io::Result<MmapInner> {
         let stack = if stack { MAP_STACK } else { 0 };
         MmapInner::new(
             len,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANON | stack,
+            libc::MAP_PRIVATE | libc::MAP_ANON | stack | additional_flags,
             -1,
             0,
         )
