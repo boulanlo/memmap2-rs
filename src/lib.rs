@@ -36,6 +36,9 @@
 //! you can use [`MmapOptions`] in order to further configure a mapping
 //! before you create it.
 
+#[cfg(unix)]
+pub use libc;
+
 #[cfg_attr(unix, path = "unix.rs")]
 #[cfg_attr(windows, path = "windows.rs")]
 #[cfg_attr(not(any(unix, windows)), path = "stub.rs")]
