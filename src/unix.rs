@@ -111,7 +111,15 @@ impl MmapInner {
     ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
         let shared = if validate {
-            libc::MAP_SHARED_VALIDATE
+            #[cfg(target_os = "macos")]
+            {
+                libc::MAP_SHARED
+            }
+
+            #[cfg(not(target_os = "macos"))]
+            {
+                libc::MAP_SHARED_VALIDATE
+            }
         } else {
             libc::MAP_SHARED
         };
@@ -134,7 +142,15 @@ impl MmapInner {
     ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
         let shared = if validate {
-            libc::MAP_SHARED_VALIDATE
+            #[cfg(target_os = "macos")]
+            {
+                libc::MAP_SHARED
+            }
+
+            #[cfg(not(target_os = "macos"))]
+            {
+                libc::MAP_SHARED_VALIDATE
+            }
         } else {
             libc::MAP_SHARED
         };
@@ -157,7 +173,15 @@ impl MmapInner {
     ) -> io::Result<MmapInner> {
         let populate = if populate { MAP_POPULATE } else { 0 };
         let shared = if validate {
-            libc::MAP_SHARED_VALIDATE
+            #[cfg(target_os = "macos")]
+            {
+                libc::MAP_SHARED
+            }
+
+            #[cfg(not(target_os = "macos"))]
+            {
+                libc::MAP_SHARED_VALIDATE
+            }
         } else {
             libc::MAP_SHARED
         };
